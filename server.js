@@ -1,4 +1,3 @@
-// backend/server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
@@ -8,20 +7,17 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:3000', // frontend URL
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Dynamic frontend URL
 }));
 app.use(express.json());
 
-// -------------------------
 // MongoDB Connection Middleware
-// -------------------------
 let cached = global.mongo;
 
 if (!cached) cached = global.mongo = { conn: null, promise: null };
 
 async function connectDB(req, res, next) {
   if (cached.conn) {
-    // console.log('Using existing MongoDB connection');
     return next();
   }
 
@@ -31,14 +27,11 @@ async function connectDB(req, res, next) {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     };
-    cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
+    cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => mongoose);
   }
 
   try {
     cached.conn = await cached.promise;
-    // console.log('MongoDB connected');
     next();
   } catch (err) {
     console.error('MongoDB connection failed:', err.message);
@@ -46,24 +39,4 @@ async function connectDB(req, res, next) {
   }
 }
 
-// Use the middleware for all routes
-app.use(connectDB);
-
-// -------------------------
-// Routes
-// -------------------------
-try {
-  app.use('/api/auth', require('./routes/authRoutes'));
-  app.use('/api/mcq', require('./routes/mcqRoutes'));
-  app.use('/api/coding', require('./routes/codingRoutes'));
-  app.use('/api/interview', require('./routes/interviewRoutes'));
-  app.use('/api/progress', require('./routes/progressRoutes'));
-  app.use('/api/admin', require('./routes/adminRoutes'));
-} catch (err) {
-  console.error('Route loading failed:', err.message);
-}
-
-// -------------------------
-// Serverless Export
-// -------------------------
-module.exports = app;
+module.exports = { app, connectDB };
