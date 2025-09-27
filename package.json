@@ -1,6 +1,7 @@
 {
   "name": "ai-interview-prep-backend",
   "version": "1.0.0",
+  "type": "commonjs", 
   "scripts": {
     "start": "node server.js",
     "vercel-start": "node server.js",
